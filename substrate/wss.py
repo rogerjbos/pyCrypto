@@ -2,13 +2,20 @@ import pandas as pd
 import json
 import random
 
+<<<<<<< HEAD
 def get_wss(chain):
   try:
     df = pd.DataFrame(WSS_ENDPOINTS[chain.lower()])
+=======
+def get_wss(tag):
+  try:
+    df = pd.DataFrame(wss_endpoints[tag.lower()])
+>>>>>>> ce8b100f30c69b8a33b2b7b828e3b68b02d99d48
     return df[random.choice(list(df))][0]
   except:
     return None
 
+<<<<<<< HEAD
 # https://paritytech.github.io/polkadot_network_directory/registry.json
 # import json
 # import urllib.request  # the lib that handles the url stuff
@@ -17,6 +24,8 @@ def get_wss(chain):
 # data.close()
 # for k in w['rpc_endpoints'].keys():
 #   print(f"{k} has endpoints: {w['rpc_endpoints'][k]}")
+=======
+>>>>>>> ce8b100f30c69b8a33b2b7b828e3b68b02d99d48
 
 # Define wss endpoints in JSON
 wss_json = """{
@@ -577,4 +586,8 @@ wss_json = """{
   ]
 }
 """
+<<<<<<< HEAD
 WSS_ENDPOINTS = json.loads(wss_json)
+=======
+wss_endpoints = json.loads(wss_json)
+>>>>>>> ce8b100f30c69b8a33b2b7b828e3b68b02d99d48
