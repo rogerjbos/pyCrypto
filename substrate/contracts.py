@@ -1,3 +1,4 @@
+import sys
 from ppci import wasm
 
 def getLanguage(ba):

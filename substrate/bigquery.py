@@ -42,4 +42,3 @@ def view_table_expriation(table_name, dataset = 'roger', proj = 'parity-data-inf
     print("Table has no expiration.")
   except:
     print("Table expires {table.expires}.")
-
