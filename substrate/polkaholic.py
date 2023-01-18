@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import time
+import calendar
 import datetime
 import requests
 import json
@@ -114,10 +115,13 @@ def getPolkaholicChainlog(chain):
   header = {"Authorization": os.getenv('POLKAHOLIC_API_KEY')}
   r = requests.get(url = API_ENDPOINT, headers = header)
   if r.status_code != 200:
-    raise Exception("Invalid request")
+      time.sleep(2)
+      r = requests.get(url = API_ENDPOINT, headers = header)
+      if r.status_code != 200:
+        raise Exception("Invalid request")
+      
   out = pd.DataFrame(r.json())
-  if 'logTS' in out.columns:
-    out['Date'] = pd.to_datetime(out['logTS'],unit='s')
+  out['id'] = chain
   return out
 
 #' Get supported chains from the Polkaholic api
@@ -177,9 +181,9 @@ def getPolkaholicTransaction(txhash):
   header = {'Authorization': os.getenv('POLKAHOLIC_API_KEY')}
   for h in range(len(txhash)):
     if h % 5 == 0:
-      print("sleep")
+      # print("sleep")
       time.sleep(1)
-    print(txhash[h])
+    # print(txhash[h])
     API_ENDPOINT = f"https://api.polkaholic.io/tx/{txhash[h]}"
     r = requests.get(url = API_ENDPOINT, headers = header)
     if r.status_code != 200:
@@ -190,17 +194,6 @@ def getPolkaholicTransaction(txhash):
   df = pd.DataFrame(data)
   return df
 
-# curl https://api.polkaholic.io/search/extrinsics \
-# -X POST \
-# -H "Content-Type: application/json" \
-# -d '{
-#     "chainIdentifier": "parallel",
-#     "section": "balances",
-#     "method": "transferKeepAlive",
-#     "dateStart": "2022-05-01",
-#     "dateEnd": "2022-05-31",
-#     "fromAddress": "0xe6b912626c9dfa3cd9e65b4412b19eb9d123edb1aa22d492a58a88091c483a7a"
-# }'
 
 def getPolkaholicExtrinsics(chain, nobs = 1, module = "staking", call = "", startDate = "", endDate = "", fromAddress = ""):
   API_ENDPOINT = f"https://api.polkaholic.io/search/extrinsics?limit={nobs}&decorate=true&extra=usd,address,related,data"
@@ -222,4 +215,26 @@ def getPolkaholicExtrinsics(chain, nobs = 1, module = "staking", call = "", star
   if 'blockTS' in out.columns:
     out['Date'] = pd.to_datetime(out['blockTS'],unit='s')
   return out
+
+def getPolkaholicXcm(chain = "moonbeam", nobs = 9999, symbol = "kbtc", startDate = "2020-12-10", endDate = "2020-12-14"):
+
+  # Convert dates into unixtime
+  if isinstance(startDate, datetime.date) == False:
+    startDate = datetime.datetime.strptime(startDate, '%Y-%m-%d')
+  if isinstance(endDate, datetime.date) == False:
+    endDate = datetime.datetime.strptime(endDate, '%Y-%m-%d')
+  startTS = calendar.timegm(startDate.utctimetuple())
+  endTS = calendar.timegm(endDate.utctimetuple())
+  
+  API_ENDPOINT = f"https://api.polkaholic.io/xcmtransfers?xcmType=xcmtransfer&chainIdentifier={chain}&symbol={symbol}&startTS={startTS}&endTS={endTS}&limit={nobs}"
+  header = {"Authorization": os.getenv('POLKAHOLIC_API_KEY')}
+  r = requests.get(url = API_ENDPOINT, headers = header)
+  if r.status_code != 200:
+    raise Exception("Invalid request")
+  out = r.json()
+  if len(out) > 0:
+    out = pd.json_normalize(out)
+    if 'xcmInfo.origination.ts' in out.columns:
+      out['date'] = pd.to_datetime(out['xcmInfo.origination.ts'], unit='s')
+    return out
 
